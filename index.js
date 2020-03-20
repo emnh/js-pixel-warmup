@@ -30,19 +30,20 @@ const f = function(data, i, x, y, rgba) {
 
 const rgba = function(width, height) {
   const r = (i, x, y) => {
-    return 0;
+    return terrainColor[i * 4 + 0];
   };
 
   const g = (i, x, y) => {
-    return 0;
+    return terrainColor[i * 4 + 1];
   };
 
   const b = (i, x, y) => {
-    return d[i] / width;
+    //return d[i] / width;
+    return terrainColor[i * 4 + 2];
   };
 
   const a = (i, x, y) => {
-    return d[i];
+    return 1;
   };
 
   return {
@@ -53,23 +54,29 @@ const rgba = function(width, height) {
   };
 };
 
+const d = new Float32Array(data.length / colors);
+const seen = new Int32Array(data.length / colors);
+const terrainColor = new Float32Array(data.length);
+
 const sx = width / 2;
 const sy = height / 2;
 const s = sx + sy * height;
-const fcmp = (a, b) => {
-  return d[a] - d[b];
-};
 const iq = [];
-for (let r = 0; r < 10; r++) {
+for (let r = 0; r < 50; r++) {
   const x = Math.floor(Math.random() * width);
   const y = Math.floor(Math.random() * height);
   const i = x + y * height;
+  terrainColor[i * 4 + 0] = Math.random();
+  terrainColor[i * 4 + 1] = Math.random();
+  terrainColor[i * 4 + 2] = Math.random();
+  terrainColor[i * 4 + 3] = Math.random();
   iq.push(i);
 }
 
+const fcmp = (a, b) => {
+  return d[a] - d[b];
+};
 const q = new TinyQueue(iq, fcmp); //new Int32Array(data.length * 4 / colors);
-const seen = new Int32Array(data.length / colors);
-const d = new Float32Array(data.length / colors);
 
 const cf = rgba(width, height);
 
@@ -79,6 +86,9 @@ while (q.length > 0) {
   const i = q.pop();
   qi++;
 
+  if (seen[i] !== 0) {
+    continue;
+  }
   seen[i] = 1;
   
   const x = i % height;
@@ -95,8 +105,14 @@ while (q.length > 0) {
       if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
         const ni = nx + ny * height;
         if (seen[ni] === 0) {
-          seen[ni] = 1;
+          //seen[ni] = 1;
           d[ni] = d[i] + 0.1 * (Math.random() - 0.2);
+          const diff = d[ni] - d[i];
+          const fx = () => 1.0 * (Math.random() - 0.5) * diff;
+          terrainColor[ni * 4 + 0] = terrainColor[i * 4 + 0] + fx();
+          terrainColor[ni * 4 + 1] = terrainColor[i * 4 + 1] + fx();
+          terrainColor[ni * 4 + 2] = terrainColor[i * 4 + 2] + fx();
+          terrainColor[ni * 4 + 3] = terrainColor[i * 4 + 3] + fx();
           q.push(ni);
           qj++;
         }
