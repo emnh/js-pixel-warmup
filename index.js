@@ -1,4 +1,5 @@
 const $ = require('jquery');
+const TinyQueue = require('tinyqueue');
 
 // Import stylesheets
 import './style.css';
@@ -54,22 +55,31 @@ const rgba = function(width, height) {
 
 const sx = width / 2;
 const sy = height / 2;
-const q = new Int32Array(data.length * 4 / colors);
+const s = sx + sy * height;
+const fcmp = (a, b) => {
+  return d[a] - d[b];
+};
+const iq = [];
+for (let r = 0; r < 10; r++) {
+  const x = Math.floor(Math.random() * width);
+  const y = Math.floor(Math.random() * height);
+  const i = x + y * height;
+  iq.push(i);
+}
+
+const q = new TinyQueue(iq, fcmp); //new Int32Array(data.length * 4 / colors);
 const seen = new Int32Array(data.length / colors);
 const d = new Float32Array(data.length / colors);
-
-/*for (let i = 0; i < data.length / colors; i++) {
-  q[i] = i;
-}*/
-q[0] = sx + sy * height;
 
 const cf = rgba(width, height);
 
 let qi = 0;
 let qj = 1;
-while (qi < q.length && qi < qj) {
-  const i = q[qi];
+while (q.length > 0) {
+  const i = q.pop();
   qi++;
+
+  seen[i] = 1;
   
   const x = i % height;
   const y = Math.floor(i / height);
@@ -86,8 +96,8 @@ while (qi < q.length && qi < qj) {
         const ni = nx + ny * height;
         if (seen[ni] === 0) {
           seen[ni] = 1;
-          d[ni] = d[i] + Math.random();
-          q[qj] = ni;
+          d[ni] = d[i] + 0.1 * (Math.random() - 0.2);
+          q.push(ni);
           qj++;
         }
       }
